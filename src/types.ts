@@ -227,6 +227,82 @@ export type DecoratorItem = {
   // importAs: 'name' | 'default' | 'ns';
 };
 
+/**
+ * Arguments passed to the `@Field()` decorator.
+ * Follows NestJS GraphQL's FieldOptions structure to avoid conflicts.
+ * These are merged into the generated `@Field()` options object.
+ *
+ * @see https://docs.nestjs.com/graphql/resolvers-map#field-decorator
+ */
+export type FieldDecoratorArguments = {
+  /**
+   * Custom name for the field in GraphQL schema (different from TypeScript property name).
+   *
+   * **Important:** When you rename a field (e.g., 'take' → 'first'), you must map the GraphQL
+   * argument names back to Prisma field names in your resolver, since Prisma expects the
+   * original field names.
+   *
+   * @example
+   * // Option 1: Manual mapping in resolver
+   * async findMany(args: FindManyArgs): Promise<Item[]> {
+   *   const { first, ...restArgs } = args as any;
+   *   return this.prisma.item.findMany({
+   *     ...restArgs,
+   *     ...(first !== undefined && { take: first }),
+   *   });
+   * }
+   *
+   * @example
+   * // Option 2: Use a helper function
+   * export function mapGraphQLArgsToPrisma(args: any): any {
+   *   const { first, ...restArgs } = args;
+   *   return {
+   *     ...restArgs,
+   *     ...(first !== undefined && { take: first }),
+   *   };
+   * }
+   *
+   * async findMany(args: FindManyArgs): Promise<Item[]> {
+   *   const prismaArgs = mapGraphQLArgsToPrisma(args);
+   *   return this.prisma.item.findMany(prismaArgs);
+   * }
+   * export function mapGraphQLArgsToPrisma(args: any): any {
+   *   const { first, ...restArgs } = args;
+   *   return {
+   *     ...restArgs,
+   *     ...(first !== undefined && { take: first }),
+   *   };
+   * }
+   */
+  name?: string;
+  /** Description shown in GraphQL schema. */
+  description?: string;
+  /** Mark field as deprecated with optional reason. */
+  deprecationReason?: string;
+  /** Complexity for query complexity analysis. */
+  complexity?: unknown;
+  /** Array of middleware to apply to the field. */
+  middleware?: unknown[];
+  /** Mark field as nullable in GraphQL schema. */
+  nullable?: boolean;
+  /** Default value for the field. */
+  defaultValue?: unknown;
+};
+
+/**
+ * Rule for overriding `@Field()` decorator arguments on generated fields.
+ * Use this to customize pagination fields (take, skip) or other generated Args fields.
+ */
+export type FieldDecoratorRule = {
+  /** Return `true` to apply this override to the current field. */
+  match: (args: FieldInfo) => boolean;
+  /**
+   * Arguments to merge into the `@Field()` decorator options.
+   * These are merged with existing arguments (nullable, etc.).
+   */
+  decoratorArguments: FieldDecoratorArguments;
+};
+
 export type ExternalConfig = Partial<{
   /**
    * Output folder for generated files.
@@ -429,4 +505,27 @@ export type ExternalConfig = Partial<{
    */
 
   decorators: DecoratorItem[];
+
+  /**
+   * Override `@Field()` decorator arguments for specific fields.
+   * Use this to customize pagination fields (take, skip, cursor) or other
+   * generated Args fields that don't come from your Prisma schema.
+   *
+   * Each rule is evaluated against generated field metadata (`FieldInfo`) and
+   * applied when `match` returns `true`.
+   *
+   * @example
+   * fieldDecoratorArguments: [
+   *   {
+   *     match: ({ objectName, propertyName }) =>
+   *       objectName.endsWith('Args') && propertyName === 'take',
+   *     decoratorArguments: {
+   *       name: 'first',
+   *       defaultValue: 10,
+   *       description: 'Number of records to return',
+   *     },
+   *   },
+   * ]
+   */
+  fieldDecoratorArguments: FieldDecoratorRule[];
 }>;

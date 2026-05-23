@@ -1,3 +1,4 @@
+import JSON5 from 'json5';
 import {
   ImportDeclarationStructure,
   ImportSpecifierStructure,
@@ -13,8 +14,9 @@ export function testSourceFile(args: {
   project: Project;
   file?: string;
   class?: string;
+  property?: string;
 }) {
-  const { class: className, file, project } = args;
+  const { class: className, file, project, property } = args;
   const getSourceFile = () => {
     if (file) {
       return project.getSourceFileOrThrow(s => s.getFilePath().endsWith(file));
@@ -50,7 +52,15 @@ export function testSourceFile(args: {
     }
   };
 
+  const fieldDecoratorOptionsString = property
+    ? getFieldDecoratorOptions(propertyMap[property])
+    : undefined;
+  const fieldDecoratorOptions = fieldDecoratorOptionsString
+    ? JSON5.parse(fieldDecoratorOptionsString as string)
+    : undefined;
+
   return {
+    fieldDecoratorOptions,
     getImportByName,
     getNamedImports: getNamedImportsFactory(importDeclarations),
     hasHideFiled,
