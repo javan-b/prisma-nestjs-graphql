@@ -1,3 +1,9 @@
+## [23.2.0](https://github.com/unlight/prisma-nestjs-graphql/compare/v23.1.0...v23.2.0) (2026-05-23)
+
+### Features
+
+* `fieldDecoratorArguments` config option for customizing @Field() decorator arguments ([#255](https://github.com/unlight/prisma-nestjs-graphql/issues/255)) ([06c7718](https://github.com/unlight/prisma-nestjs-graphql/commit/06c77184e3352b7ee25648f265a81b4c6fba7131))
+
 ## [23.1.0](https://github.com/unlight/prisma-nestjs-graphql/compare/v23.0.1...v23.1.0) (2026-05-15)
 
 ### Features
